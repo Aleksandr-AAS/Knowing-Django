@@ -26,5 +26,4 @@ urlpatterns = [
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("catalog.urls")),
-    # path('catalog/', include('catalog.urls')),  # все URL, начинающиеся с catalog/, будут обрабатываться приложением catalog
 ]
