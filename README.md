@@ -28,6 +28,7 @@ pip install -r requirements.txt
 
 Запустите python manage.py runserver 
 Запустите браузер , в строке поиска http://localhost:8000
+Админка http://127.0.0.1:8000/admin
 
 ## Документация:
 
@@ -50,7 +51,7 @@ pip install -r requirements.txt
 
 #### 5. Дополнительная информация по текущему релизу на 
 ##### 
-##### 
+##### Работа с ORM в Django
 
 
 
