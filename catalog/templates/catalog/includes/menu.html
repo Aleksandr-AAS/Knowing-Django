@@ -1,0 +1,43 @@
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>Title</title>-->
+<!--</head>-->
+<!--<body>-->
+
+<!--</body>-->
+<!--</html>-->
+
+<nav class="nav-menu">
+    <style>
+        .nav-menu {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            font-weight: 500;
+        }
+
+        .nav-menu a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-menu a.active {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+
+    <a href="{% url 'home' %}" {% if request.path == '/' %}class="active"{% endif %}>
+        Главная
+    </a>
+    <a href="{% url 'contacts' %}" {% if request.path == '/contacts/' %}class="active"{% endif %}>
+        Контакты
+    </a>
+</nav>
