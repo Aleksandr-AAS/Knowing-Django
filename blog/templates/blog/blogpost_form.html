@@ -1,0 +1,121 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{% if form.instance.pk %}Редактирование{% else %}Новая запись{% endif %} | Блог{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .form-container h1 {
+        margin-top: 0;
+        margin-bottom: 30px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    input[type="text"],
+    input[type="file"],
+    textarea,
+    select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-family: inherit;
+    }
+
+    textarea {
+        resize: vertical;
+    }
+
+    input[type="checkbox"] {
+        margin-right: 10px;
+    }
+
+    .help-text {
+        font-size: 0.85em;
+        color: #999;
+        margin-top: 5px;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 30px;
+    }
+
+    .btn-submit, .btn-cancel {
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-submit {
+        background: #27ae60;
+        color: white;
+    }
+
+    .btn-cancel {
+        background: #95a5a6;
+        color: white;
+    }
+
+    .errorlist {
+        color: #e74c3c;
+        list-style: none;
+        padding: 0;
+        margin: 5px 0 0;
+        font-size: 0.9em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>{% if form.instance.pk %}Редактирование записи{% else %}Создание новой записи{% endif %}</h1>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% for field in form %}
+            <div class="form-group">
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}
+                    <div class="help-text">{{ field.help_text }}</div>
+                {% endif %}
+                {% if field.errors %}
+                    <ul class="errorlist">
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <div class="form-actions">
+            <button type="submit" class="btn-submit">💾 Сохранить</button>
+            <a href="{% url 'blog:post_list' %}" class="btn-cancel">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

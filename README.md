@@ -27,8 +27,9 @@ pip install -r requirements.txt
 ## Использование:
 
 Запустите python manage.py runserver 
-Запустите браузер , в строке поиска http://localhost:8000
-Админка http://127.0.0.1:8000/admin
+##### Запустите браузер , в строке поиска http://localhost:8000
+##### Админка http://127.0.0.1:8000/admin
+##### Блог http://127.0.0.1:8000/blog/
 
 ## Документация:
 
@@ -51,7 +52,7 @@ pip install -r requirements.txt
 
 #### 5. Дополнительная информация по текущему релизу на 
 ##### 
-##### Шаблонизация в Django
+##### 25 FBV и CBV
 
 
 

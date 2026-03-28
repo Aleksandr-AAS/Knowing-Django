@@ -1,0 +1,73 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Удаление записи | Блог{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-container {
+        max-width: 500px;
+        margin: 50px auto;
+        background: white;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .warning-icon {
+        font-size: 48px;
+        margin-bottom: 20px;
+    }
+
+    .delete-container h1 {
+        color: #e74c3c;
+        margin-bottom: 20px;
+    }
+
+    .delete-container p {
+        color: #666;
+        margin-bottom: 30px;
+    }
+
+    .delete-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+    }
+
+    .btn-delete, .btn-cancel {
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-delete {
+        background: #e74c3c;
+        color: white;
+    }
+
+    .btn-cancel {
+        background: #95a5a6;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <div class="warning-icon">⚠️</div>
+    <h1>Удаление записи</h1>
+    <p>Вы уверены, что хотите удалить запись <strong>"{{ object.title }}"</strong>?</p>
+    <p style="font-size: 0.9em;">Это действие нельзя отменить.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="delete-actions">
+            <button type="submit" class="btn-delete">🗑️ Да, удалить</button>
+            <a href="{% url 'blog:post_detail' object.pk %}" class="btn-cancel">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
