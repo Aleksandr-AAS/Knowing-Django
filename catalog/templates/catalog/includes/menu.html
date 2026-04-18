@@ -3,6 +3,8 @@
         .nav-menu {
             display: flex;
             gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
         .nav-menu a {
@@ -21,6 +23,31 @@
         .nav-menu a.active {
             background-color: rgba(255, 255, 255, 0.3);
         }
+
+        .user-greeting {
+            color: white;
+            margin-right: 10px;
+        }
+
+        .logout-form {
+            display: inline;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 8px 15px;
+            font-size: 16px;
+            font-family: inherit;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
     </style>
 
     <a href="{% url 'catalog:home' %}" {% if request.path == '/' %}class="active"{% endif %}>
@@ -29,4 +56,16 @@
     <a href="{% url 'catalog:contacts' %}" {% if request.path == '/contacts/' %}class="active"{% endif %}>
         Контакты
     </a>
+
+    {% if user.is_authenticated %}
+        <span class="user-greeting">👋 Привет, {{ user.username }}!</span>
+        <a href="{% url 'users:profile' %}">Профиль</a>
+        <form action="{% url 'users:logout' %}" method="post" class="logout-form">
+            {% csrf_token %}
+            <button type="submit" class="logout-btn">Выйти</button>
+        </form>
+    {% else %}
+        <a href="{% url 'users:login' %}">Войти</a>
+        <a href="{% url 'users:register' %}">Регистрация</a>
+    {% endif %}
 </nav>
