@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Добро пожаловать в наш каталог!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+        .header {
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 25px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #999;
+        }
+        .greeting {
+            font-size: 18px;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Добро пожаловать в наш каталог! 🎉</h1>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Здравствуйте, <strong>{{ user.get_full_name|default:user.username }}</strong>!</p>
+
+            <p>Спасибо за регистрацию в нашем интернет-магазине!</p>
+
+            <p>Мы рады приветствовать вас в нашем каталоге. Теперь вы можете:</p>
+            <ul>
+                <li>✅ Просматривать и покупать товары</li>
+                <li>✅ Отслеживать свои заказы</li>
+                <li>✅ Получать персональные скидки</li>
+                <li>✅ Участвовать в акциях и распродажах</li>
+            </ul>
+
+            <p>Ваши данные для входа:</p>
+            <ul>
+                <li><strong>Email:</strong> {{ user.email }}</li>
+                <li><strong>Имя пользователя:</strong> {{ user.username }}</li>
+            </ul>
+
+            <div style="text-align: center;">
+                <a href="{{ site_url }}" class="button">Перейти в каталог</a>
+                <a href="{{ profile_url }}" class="button" style="background: #27ae60;">Заполнить профиль</a>
+            </div>
+
+            <p style="margin-top: 30px;">
+                С уважением,<br>
+                Команда интернет-магазина
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>© {% now "Y" %} Каталог товаров. Все права защищены.</p>
+            <p>Это автоматическое письмо, пожалуйста, не отвечайте на него.</p>
+        </div>
+    </div>
+</body>
+</html>
