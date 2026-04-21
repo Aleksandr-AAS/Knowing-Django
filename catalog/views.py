@@ -6,50 +6,63 @@ from django.views.generic import (
     DeleteView,
     TemplateView,
 )
+from django.views import View
 from django.urls import reverse_lazy
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
+from django.shortcuts import get_object_or_404, redirect
 from .models import Product
 from .forms import ProductForm
 
-# ========== Публичные контроллеры (доступны всем) ==========
+
+# ========== Публичные контроллеры ==========
 
 
 class HomeView(ListView):
     """
-    Главная страница - список товаров (доступен всем)
+    Главная страница - только опубликованные товары
     """
 
     model = Product
     template_name = "catalog/home.html"
     context_object_name = "products"
-    ordering = ["-created_at"]
+
+    def get_queryset(self):
+        return Product.objects.filter(is_published=True).order_by("-created_at")
 
 
 class ProductDetailView(DetailView):
     """
-    Детальная страница товара (доступен всем)
+    Детальная страница товара
     """
 
     model = Product
     template_name = "catalog/product_detail.html"
     context_object_name = "product"
 
+    def get_queryset(self):
+        # Модераторы видят все товары, остальные только опубликованные
+        if self.request.user.has_perm("catalog.can_unpublish_product"):
+            return Product.objects.all()
+        return Product.objects.filter(is_published=True)
+
 
 class ContactsView(TemplateView):
     """
-    Страница контактов (доступна всем)
+    Страница контактов
     """
 
     template_name = "catalog/contacts.html"
 
 
-# ========== Контроллеры для управления продуктами (только для авторизованных) ==========
-
-
+# ========== Контроллеры для управления продуктами ==========
 class ProductListView(LoginRequiredMixin, ListView):
     """
-    Список товаров для управления (только для авторизованных)
+    Список товаров для управления
     """
 
     model = Product
@@ -58,19 +71,38 @@ class ProductListView(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return Product.objects.all().order_by("-created_at")
+        user = self.request.user
+        if user.has_perm("catalog.can_unpublish_product"):
+            return Product.objects.all().order_by("-created_at")
+        return Product.objects.filter(owner=user).order_by("-created_at")
 
-    def handle_no_permission(self):
-        """Перенаправление для неавторизованных пользователей"""
-        messages.error(
-            self.request, "Для просмотра этой страницы необходимо войти в систему."
-        )
-        return super().handle_no_permission()
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Добавляем текущего пользователя в контекст для проверок в шаблоне
+        context["current_user"] = self.request.user
+        return context
+
+
+# class ProductListView(LoginRequiredMixin, ListView):
+#     """
+#     Список товаров для управления
+#     """
+#     model = Product
+#     template_name = 'catalog/product_list.html'
+#     context_object_name = 'products'
+#     paginate_by = 10
+#
+#     def get_queryset(self):
+#         user = self.request.user
+#         # Модераторы видят все товары, обычные пользователи только свои
+#         if user.has_perm('catalog.can_unpublish_product'):
+#             return Product.objects.all().order_by('-created_at')
+#         return Product.objects.filter(owner=user).order_by('-created_at')
 
 
 class ProductCreateView(LoginRequiredMixin, CreateView):
     """
-    Создание товара (только для авторизованных)
+    Создание товара - автоматически назначается владелец
     """
 
     model = Product
@@ -85,6 +117,8 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
         return context
 
     def form_valid(self, form):
+        # ✅ Автоматически привязываем продукт к текущему пользователю
+        form.instance.owner = self.request.user
         messages.success(self.request, "Товар успешно создан!")
         return super().form_valid(form)
 
@@ -92,14 +126,10 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
         messages.error(self.request, "Исправьте ошибки в форме.")
         return super().form_invalid(form)
 
-    def handle_no_permission(self):
-        messages.error(self.request, "Для создания товара необходимо войти в систему.")
-        return super().handle_no_permission()
 
-
-class ProductUpdateView(LoginRequiredMixin, UpdateView):
+class ProductUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     """
-    Редактирование товара (только для авторизованных)
+    Редактирование товара - только владелец или модератор
     """
 
     model = Product
@@ -115,192 +145,57 @@ class ProductUpdateView(LoginRequiredMixin, UpdateView):
         context["button_text"] = "Сохранить изменения"
         return context
 
+    def test_func(self):
+        """Проверка: только владелец или модератор могут редактировать"""
+        product = self.get_object()
+        user = self.request.user
+        return product.is_owner(user) or user.has_perm("catalog.can_unpublish_product")
+
+    def handle_no_permission(self):
+        messages.error(self.request, "У вас нет прав для редактирования этого товара.")
+        return redirect("catalog:product_list")
+
     def form_valid(self, form):
         messages.success(self.request, "Товар успешно обновлен!")
         return super().form_valid(form)
 
-    def form_invalid(self, form):
-        messages.error(self.request, "Исправьте ошибки в форме.")
-        return super().form_invalid(form)
 
-    def handle_no_permission(self):
-        messages.error(
-            self.request, "Для редактирования товара необходимо войти в систему."
-        )
-        return super().handle_no_permission()
-
-
-class ProductDeleteView(LoginRequiredMixin, DeleteView):
+class ProductDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     """
-    Удаление товара (только для авторизованных)
+    Удаление товара - владелец или модератор
     """
 
     model = Product
     template_name = "catalog/product_confirm_delete.html"
     success_url = reverse_lazy("catalog:product_list")
 
+    def test_func(self):
+        """Проверка: владелец или модератор могут удалять"""
+        product = self.get_object()
+        user = self.request.user
+        return product.can_delete(user)
+
+    def handle_no_permission(self):
+        messages.error(self.request, "У вас нет прав для удаления этого товара.")
+        return redirect("catalog:product_list")
+
     def delete(self, request, *args, **kwargs):
         messages.success(request, "Товар успешно удален!")
         return super().delete(request, *args, **kwargs)
 
-    def handle_no_permission(self):
-        messages.error(self.request, "Для удаления товара необходимо войти в систему.")
-        return super().handle_no_permission()
 
+class ProductTogglePublishView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """
+    Переключение статуса публикации - только для модераторов
+    """
 
-# from django.views.generic import TemplateView
-# from django.views.generic import (
-#     ListView,
-#     DetailView,
-#     CreateView,
-#     UpdateView,
-#     DeleteView,
-# )
-# from django.urls import reverse_lazy
-# from django.contrib import messages
-# from .models import Product
-# from .forms import ProductForm
-#
-#
-# # ========== CBV: Главная страница (список товаров) ==========
-# class HomeView(ListView):
-#     """
-#     Контроллер для главной страницы.
-#     Отображает список всех товаров.
-#     """
-#
-#     model = Product
-#     template_name = "catalog/home.html"
-#     context_object_name = "products"
-#     ordering = ["-created_at"]
-#
-#
-# # ========== CBV: Детальная страница товара ==========
-# class ProductDetailView(DetailView):
-#     """
-#     Контроллер для детальной страницы товара.
-#     Отображает полную информацию о конкретном товаре.
-#     """
-#
-#     model = Product
-#     template_name = "catalog/product_detail.html"
-#     context_object_name = "product"
-#
-#     def get_context_data(self, **kwargs):
-#         """
-#         Добавляем похожие товары в контекст (по желанию)
-#         """
-#         context = super().get_context_data(**kwargs)
-#         # Получаем текущий товар
-#         current_product = self.get_object()
-#         # Ищем похожие товары из той же категории, исключая текущий
-#         context["similar_products"] = Product.objects.filter(
-#             category=current_product.category
-#         ).exclude(pk=current_product.pk)[:4]
-#         return context
-#
-#
-# # ========== CBV: Страница контактов ==========
-# class ContactsView(TemplateView):
-#     """
-#     Контроллер для страницы контактов.
-#     TemplateView просто отображает шаблон без дополнительных данных.
-#     """
-#
-#     template_name = "catalog/contacts.html"
-#
-#     # Опционально: можно добавить контекстные данные
-#     def get_context_data(self, **kwargs):
-#         """
-#         Добавляем контактные данные в контекст (вместо жесткого кода в шаблоне)
-#         """
-#         context = super().get_context_data(**kwargs)
-#         context["phone"] = "+7 (495) 123-45-67"
-#         context["email"] = "info@catalog.ru"
-#         context["address"] = "г. Москва, ул. Тверская, д. 1"
-#         context["work_hours"] = "Пн-Пт: 9:00 - 20:00, Сб-Вс: 10:00 - 18:00"
-#         return context
-#
-#
-# class ProductCreateView(CreateView):
-#     """
-#     Контроллер для создания нового товара
-#     """
-#
-#     model = Product
-#     form_class = ProductForm
-#     template_name = "catalog/product_form.html"
-#     success_url = reverse_lazy("catalog:product_list")
-#
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         context["title"] = "Добавление товара"
-#         context["button_text"] = "Создать товар"
-#         return context
-#
-#     def form_valid(self, form):
-#         """Дополнительная логика при успешном создании"""
-#         messages.success(self.request, "Товар успешно создан!")
-#         return super().form_valid(form)
-#
-#     def form_invalid(self, form):
-#         """Логика при невалидной форме"""
-#         messages.error(self.request, "Исправьте ошибки в форме.")
-#         return super().form_invalid(form)
-#
-#
-# class ProductUpdateView(UpdateView):
-#     """
-#     Контроллер для редактирования товара
-#     """
-#
-#     model = Product
-#     form_class = ProductForm
-#     template_name = "catalog/product_form.html"
-#
-#     def get_success_url(self):
-#         """После успешного редактирования перенаправляем на детальную страницу"""
-#         return reverse_lazy("catalog:product_detail", kwargs={"pk": self.object.pk})
-#
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         context["title"] = "Редактирование товара"
-#         context["button_text"] = "Сохранить изменения"
-#         return context
-#
-#     def form_valid(self, form):
-#         messages.success(self.request, "Товар успешно обновлен!")
-#         return super().form_valid(form)
-#
-#     def form_invalid(self, form):
-#         messages.error(self.request, "Исправьте ошибки в форме.")
-#         return super().form_invalid(form)
-#
-#
-# class ProductDeleteView(DeleteView):
-#     """
-#     Контроллер для удаления товара
-#     """
-#
-#     model = Product
-#     template_name = "catalog/product_confirm_delete.html"
-#     success_url = reverse_lazy("catalog:product_list")
-#
-#     def delete(self, request, *args, **kwargs):
-#         messages.success(request, "Товар успешно удален!")
-#         return super().delete(request, *args, **kwargs)
-#
-#
-# class ProductListView(ListView):
-#     """
-#     Контроллер для списка всех товаров (для управления)
-#     """
-#
-#     model = Product
-#     template_name = "catalog/product_list.html"
-#     context_object_name = "products"
-#     paginate_by = 10
-#
-#     def get_queryset(self):
-#         """Можно добавить фильтрацию, сортировку"""
-#         return Product.objects.all().order_by("-created_at")
+    permission_required = "catalog.can_unpublish_product"
+
+    def post(self, request, pk):
+        product = get_object_or_404(Product, pk=pk)
+        product.is_published = not product.is_published
+        product.save()
+
+        status = "опубликован" if product.is_published else "снят с публикации"
+        messages.success(request, f'Товар "{product.name}" успешно {status}.')
+        return redirect("catalog:product_list")

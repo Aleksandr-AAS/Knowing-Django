@@ -19,7 +19,6 @@
         text-align: center;
     }
 
-    /* Стили для формы */
     .form-group {
         margin-bottom: 25px;
     }
@@ -36,7 +35,6 @@
         color: #e74c3c;
     }
 
-    /* Общие стили для полей ввода */
     .form-control {
         width: 100%;
         padding: 12px;
@@ -54,13 +52,11 @@
         box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
     }
 
-    /* Стили для textarea */
     textarea.form-control {
         resize: vertical;
         min-height: 120px;
     }
 
-    /* Стили для select */
     .form-select {
         width: 100%;
         padding: 12px;
@@ -69,23 +65,14 @@
         font-size: 1em;
         background: white;
         cursor: pointer;
-        transition: all 0.3s ease;
     }
 
-    .form-select:focus {
-        outline: none;
-        border-color: #3498db;
-        box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
-    }
-
-    /* Стили для file input */
     .form-file {
         padding: 10px;
         border: 2px dashed #ddd;
         border-radius: 8px;
         background: #f8f9fa;
         cursor: pointer;
-        transition: all 0.3s ease;
         width: 100%;
     }
 
@@ -94,7 +81,33 @@
         background: #f0f7ff;
     }
 
-    /* Стили для ошибок */
+    /* Стили для чекбокса */
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+    }
+
+    .checkbox-group input {
+        width: 20px;
+        height: 20px;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .checkbox-group label {
+        margin: 0;
+        cursor: pointer;
+        color: #2c3e50;
+        font-weight: 500;
+    }
+
+    .checkbox-group .help-text {
+        margin-left: 32px;
+        margin-top: 5px;
+    }
+
     .errorlist {
         list-style: none;
         padding: 0;
@@ -111,14 +124,12 @@
         border-left: 4px solid #e74c3c;
     }
 
-    /* Стили для help text */
     .help-text {
         font-size: 0.85em;
         color: #7f8c8d;
         margin-top: 5px;
     }
 
-    /* Блок с запрещенными словами */
     .forbidden-words {
         background: #fff3cd;
         border: 1px solid #ffc107;
@@ -143,7 +154,6 @@
         font-size: 0.85em;
     }
 
-    /* Кнопки */
     .form-actions {
         display: flex;
         gap: 15px;
@@ -184,7 +194,6 @@
         transform: translateY(-2px);
     }
 
-    /* Информация о полях */
     .field-info {
         display: flex;
         justify-content: space-between;
@@ -195,6 +204,18 @@
     .required-field {
         color: #e74c3c;
         font-size: 0.85em;
+    }
+
+    .current-image {
+        margin-top: 10px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 5px;
+    }
+
+    .current-image img {
+        max-width: 100px;
+        border-radius: 5px;
     }
 </style>
 {% endblock %}
@@ -214,25 +235,46 @@
         {% csrf_token %}
 
         {% for field in form %}
-            <div class="form-group">
-                <div class="field-info">
-                    {{ field.label_tag }}
-                    {% if field.field.required %}
-                        <span class="required-field">Обязательное поле</span>
+            {% if field.name == 'is_published' %}
+                <!-- Специальное отображение для чекбокса -->
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        {{ field }}
+                        {{ field.label_tag }}
+                    </div>
+                    {% if field.help_text %}
+                        <div class="help-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% if field.errors %}
+                        <ul class="errorlist">
+                            {% for error in field.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
                     {% endif %}
                 </div>
-                {{ field }}
-                {% if field.help_text %}
-                    <div class="help-text">{{ field.help_text }}</div>
-                {% endif %}
-                {% if field.errors %}
-                    <ul class="errorlist">
-                        {% for error in field.errors %}
-                            <li>{{ error }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-            </div>
+            {% else %}
+                <!-- Обычное отображение для остальных полей -->
+                <div class="form-group">
+                    <div class="field-info">
+                        {{ field.label_tag }}
+                        {% if field.field.required %}
+                            <span class="required-field">Обязательное поле</span>
+                        {% endif %}
+                    </div>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <div class="help-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% if field.errors %}
+                        <ul class="errorlist">
+                            {% for error in field.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            {% endif %}
         {% endfor %}
 
         <div class="form-actions">
