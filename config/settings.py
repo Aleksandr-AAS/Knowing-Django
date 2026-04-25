@@ -147,3 +147,44 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 DEFAULT_FROM_EMAIL = "noreply@catalog.ru"
+
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+#         'LOCATION': 'redis://127.0.0.1:6379/1',
+#     }
+# }
+CACHE_ENABLED = True
+
+if CACHE_ENABLED:
+    # Используем локальный кеш в памяти (быстро, но теряется при перезапуске)
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "catalog_cache",
+            "TIMEOUT": 300,
+            "OPTIONS": {
+                "MAX_ENTRIES": 1000,
+            },
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+        }
+    }
+
+# Время кеширования для разных типов страниц (в секундах)
+CACHE_TIMEOUTS = {
+    "product_detail": 60 * 15,  # 15 минут
+    "product_list": 60 * 5,  # 5 минут
+    "home_page": 60 * 5,  # 5 минут
+    "category_page": 60 * 10,
+}
+
+# Ключи кеша
+CACHE_KEYS = {
+    "home_products": "home_products_list",
+    "all_products": "all_products_list",
+}
