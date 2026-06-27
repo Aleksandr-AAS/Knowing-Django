@@ -22,7 +22,9 @@ class EmailAuthBackend(ModelBackend):
             user = User.objects.get(Q(email=username) | Q(username=username))
         except User.DoesNotExist:
             # Запускаем стандартный процесс аутентификации
-            return super().authenticate(request, username=username, password=password, **kwargs)
+            return super().authenticate(
+                request, username=username, password=password, **kwargs
+            )
 
         # Проверяем пароль
         if user.check_password(password) and self.user_can_authenticate(user):

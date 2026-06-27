@@ -26,7 +26,6 @@ from .services import (
     clear_category_cache,
 )
 
-
 # ========== Публичные контроллеры (доступны всем) ==========
 
 
