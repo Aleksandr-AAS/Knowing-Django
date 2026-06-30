@@ -55,24 +55,28 @@ class RegisterView(CreateView):
 
 class CustomLoginView(LoginView):
     """
-    Контроллер для входа пользователя
+    Контроллер для входа пользователя по email
     """
 
     template_name = "users/login.html"
+    authentication_form = CustomAuthenticationForm  # ← кастомная форма для email
     redirect_authenticated_user = True
 
     def get_success_url(self):
+        """Перенаправление после успешного входа"""
         return reverse_lazy("catalog:home")
 
     def form_valid(self, form):
+        """При успешном входе показываем сообщение"""
+        user = form.get_user()
         messages.success(
-            self.request,
-            f"С возвращением, {form.get_user().get_full_name() or form.get_user().username}!",
+            self.request, f"С возвращением, {user.get_full_name() or user.username}!"
         )
         return super().form_valid(form)
 
     def form_invalid(self, form):
-        messages.error(self.request, "Неверное имя пользователя или пароль.")
+        """При ошибке входа показываем сообщение"""
+        messages.error(self.request, "Неверный email или пароль. Попробуйте еще раз.")
         return super().form_invalid(form)
 
 
@@ -128,42 +132,3 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     def form_invalid(self, form):
         messages.error(self.request, "Исправьте ошибки в форме.")
         return super().form_invalid(form)
-
-
-class CustomLoginView(LoginView):
-    """
-    Контроллер для входа пользователя по email
-    """
-
-    template_name = "users/login.html"
-    authentication_form = CustomAuthenticationForm  # ← используем кастомную форму
-    redirect_authenticated_user = True
-
-    def get_success_url(self):
-        """Перенаправление после успешного входа"""
-        return reverse_lazy("catalog:home")
-
-    def form_valid(self, form):
-        """При успешном входе показываем сообщение"""
-        user = form.get_user()
-        messages.success(
-            self.request, f"С возвращением, {user.get_full_name() or user.username}!"
-        )
-        return super().form_valid(form)
-
-    def form_invalid(self, form):
-        """При ошибке входа показываем сообщение"""
-        messages.error(self.request, "Неверный email или пароль. Попробуйте еще раз.")
-        return super().form_invalid(form)
-
-
-class CustomLogoutView(LogoutView):
-    """
-    Контроллер для выхода пользователя
-    """
-
-    next_page = reverse_lazy("catalog:home")
-
-    def dispatch(self, request, *args, **kwargs):
-        messages.info(request, "Вы вышли из системы.")
-        return super().dispatch(request, *args, **kwargs)
