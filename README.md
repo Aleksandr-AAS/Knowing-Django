@@ -4,6 +4,21 @@
 ## Ссылка на проект
 http://158.160.202.94/
 
+## 🚀 Запуск локально
+
+## Через Docker (рекомендуется)
+  
+  docker-compose up --build
+## Без Docker
+    python -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    python manage.py migrate
+    python manage.py runserver
+
+
+
+
 ##  Деплой
 Проект развёрнут на VPS Yandex Cloud.
 Используются: Django, PostgreSQL, Gunicorn, Nginx, GitHub Actions.
